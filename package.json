@@ -1,0 +1,43 @@
+{
+  "name": "js-state-monad",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "config": {
+    "eslintopts": "--cache --format codeframe --ext .js,.jsx"
+  },
+  "lint-staged": {
+    "linters": {
+      "*.{js,jsx}": "eslint $npm_package_config_eslintopts"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^3.16.1",
+    "eslint-config-prettier": "^2.4.0",
+    "eslint-config-standard": "^7.0.0",
+    "eslint-plugin-lodash": "^2.4.0",
+    "eslint-plugin-mocha": "^4.8.0",
+    "eslint-plugin-prettier": "^2.2.0",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^2.1.1",
+    "husky": "^0.14.3",
+    "lint-staged": "^5.0.0",
+    "nyc": "11.3.0",
+    "prettier": "^1.7.0",
+    "tape": "4.8.0",
+    "tape-promise": "2.0.1",
+    "tape-catch": "1.0.6"
+  },
+  "scripts": {
+    "lint": "eslint --cache --format codeframe --ext .js,.jsx .",
+    "lint-staged": "lint-staged",
+    "precommit": "lint-staged",
+    "test": "test"
+  },
+  "author": "Leeor Aharon",
+  "license": "MIT"
+}
