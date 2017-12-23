@@ -200,3 +200,48 @@ test('map returns the value returned by the mapping function and the previous st
   t.deepEqual(result, Pair(mapFn(stateFn(state).fst), stateFn(state).snd))
   t.end()
 })
+
+test('join flattens a recursive State', function(t) {
+  t.plan(1)
+
+  const state = 42
+
+  const firstStateFn = s => {
+    return Pair(s * 2, s + 1)
+  }
+
+  const secondStateFn = a => s => {
+    return Pair(s + a, s)
+  }
+
+  const result = State(firstStateFn)
+    .map(mappedValue => {
+      return State(secondStateFn(mappedValue))
+    })
+    .join()
+    .runState(state)
+  t.deepEqual(result, Pair(84 + 43, 43))
+  t.end()
+})
+
+test('bind maps a State and joins it', function(t) {
+  t.plan(1)
+
+  const state = 42
+
+  const firstStateFn = s => {
+    return Pair(s * 2, s + 1)
+  }
+
+  const secondStateFn = a => s => {
+    return Pair(s + a, s)
+  }
+
+  const result = State(firstStateFn)
+    .bind(mappedValue => {
+      return State(secondStateFn(mappedValue))
+    })
+    .runState(state)
+  t.deepEqual(result, Pair(84 + 43, 43))
+  t.end()
+})

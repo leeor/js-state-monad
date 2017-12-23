@@ -2,7 +2,7 @@
 
 const { Pair } = require('./pair')
 
-// State :: (Object -> Pair(value, object)) -> State
+// State :: (state -> Pair(value, state)) -> State
 const State = fn => {
   return {
     // runState :: state -> Pair(value, state)
@@ -50,11 +50,11 @@ const State = fn => {
       const runState = this.runState
       return State(state => {
         const inner = runState(state)
-        return inner.value.runState(inner.snd)
+        return inner.fst.runState(inner.snd)
       })
     },
 
-    // bind :: (value -> value) -> (state -> Pair(value, state))
+    // bind :: (state -> State) -> (state -> Pair(value, state))
     bind(f) {
       return this.map(f).join()
     }
