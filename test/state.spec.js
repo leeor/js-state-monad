@@ -4,7 +4,9 @@ const tape = require('tape-catch')
 const _test = require('tape-promise').default
 const test = _test(tape)
 
-const { State, Pair } = require('../src/index')
+const { State, Pair, get, modify, gets } = require('../src/index')
+
+const assign = o1 => o2 => Object.assign({}, o2, o1)
 
 test('runState calls wrapped function with the given state', function(t) {
   t.plan(1)
@@ -243,5 +245,105 @@ test('bind maps a State and joins it', function(t) {
     })
     .runState(state)
   t.deepEqual(result, Pair(84 + 43, 43))
+  t.end()
+})
+
+test('app code sample (modify)', function(t) {
+  const state = {
+    parents: {
+      Robert: { lastName: 'Parr' },
+      Helen: { lastName: 'Parr' }
+    },
+    children: {
+      Violet: { lastName: 'Parr' },
+      John: { middleName: 'Jackson', lastName: 'Parr' }
+    }
+  }
+
+  const getFamilyMember = (...args) => family =>
+    args.reduce((acc, val) => (acc && acc[val] ? acc[val] : {}), family)
+  const setFamilyMember = (path, updatedNode) => family =>
+    Object.assign(
+      {},
+      family,
+      path.reduceRight(
+        (acc, key, i) =>
+          Object.assign(
+            {},
+            {
+              [key]: Object.assign(
+                {},
+                getFamilyMember(...path.slice(0, i + 1))(family),
+                acc
+              )
+            }
+          ),
+        updatedNode
+      )
+    )
+
+  t.test('add child', function(st) {
+    const newBornName = ['children', 'Dashiel']
+    const newBorn = { lastName: 'Parr', nickname: 'Dash' }
+
+    const addFamilyMember = (name, newMember) =>
+      modify(setFamilyMember(name, newMember))
+
+    const updatedFamily = addFamilyMember(newBornName, newBorn).execState(state)
+
+    st.deepEqual(
+      updatedFamily,
+      Object.assign({}, state, {
+        children: Object.assign({}, state.children, {
+          [newBornName[1]]: newBorn
+        })
+      })
+    )
+    st.end()
+  })
+
+  t.test('merge nicknames', function(st) {
+    st.plan(1)
+    const childToUpdate = ['children', 'John']
+    const childDataToMerge = { nickname: 'JackJack' }
+    const parentToUpdate = ['parents', 'Helen']
+    const parentDataToMerge = { nickname: 'Elastigirl' }
+
+    const updateFamilyMember = (name, updateFn) =>
+      gets(getFamilyMember(...name))
+        .map(updateFn)
+        .bind(updatedMember =>
+          get().bind(() => modify(setFamilyMember(name, updatedMember)))
+        )
+
+    const updatedFamily = updateFamilyMember(
+      childToUpdate,
+      assign(childDataToMerge)
+    )
+      .bind(() => updateFamilyMember(parentToUpdate, assign(parentDataToMerge)))
+      .execState(state)
+
+    st.deepEqual(
+      updatedFamily,
+      Object.assign({}, state, {
+        parents: Object.assign({}, state.parents, {
+          [parentToUpdate[1]]: Object.assign(
+            {},
+            state.parents[parentToUpdate[1]],
+            parentDataToMerge
+          )
+        }),
+        children: Object.assign({}, state.children, {
+          [childToUpdate[1]]: Object.assign(
+            {},
+            state.children[childToUpdate[1]],
+            childDataToMerge
+          )
+        })
+      })
+    )
+    st.end()
+  })
+
   t.end()
 })
