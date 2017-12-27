@@ -37,7 +37,7 @@
     "lint": "eslint --cache --format codeframe --ext .js,.jsx .",
     "lint-staged": "lint-staged",
     "precommit": "lint-staged",
-    "test": "faucet"
+    "test": "nyc faucet"
   },
   "author": "Leeor Aharon",
   "license": "MIT"
