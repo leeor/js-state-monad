@@ -57,6 +57,15 @@ const State = fn => {
     // bind :: (state -> State) -> (state -> Pair(value, state))
     bind(f) {
       return this.map(f).join()
+    },
+
+    // ap :: Functor t => t a -> (state -> Pair(value, state))
+    ap(t) {
+      const runState = this.runState
+      return State(state => {
+        const result = runState(state)
+        return t.map(result.fst).runState(result.snd)
+      })
     }
   }
 }

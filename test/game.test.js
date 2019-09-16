@@ -18,6 +18,16 @@ describe('State Monad - simple game example', function() {
   const startState = { on: false, score: 0 }
   const expectedResult = 2
 
+  // increaseScore :: State -> State
+  const increaseScore = state =>
+    Object.assign({}, state, { score: state.score + 1 })
+  // decreaseScore :: State -> State
+  const decreaseScore = state =>
+    Object.assign({}, state, { score: state.score - 1 })
+
+  // toggleGameState :: State -> State
+  const toggleGameState = state => Object.assign({}, state, { on: !state.on })
+
   test('using get/put', function() {
     const playGame = sequence => {
       if (sequence.length === 0) {
@@ -27,19 +37,15 @@ describe('State Monad - simple game example', function() {
       return get().bind(state => {
         switch (sequence.slice(0, 1)) {
           case 'a':
-            return put(
-              state.on
-                ? Object.assign({}, state, { score: state.score + 1 })
-                : state
-            ).bind(() => playGame(sequence.slice(1)))
+            return put(state.on ? increaseScore(state) : state).bind(() =>
+              playGame(sequence.slice(1))
+            )
           case 'b':
-            return put(
-              state.on
-                ? Object.assign({}, state, { score: state.score - 1 })
-                : state
-            ).bind(() => playGame(sequence.slice(1)))
+            return put(state.on ? decreaseScore(state) : state).bind(() =>
+              playGame(sequence.slice(1))
+            )
           case 'c':
-            return put(Object.assign({}, state, { on: !state.on })).bind(() =>
+            return put(toggleGameState(state)).bind(() =>
               playGame(sequence.slice(1))
             )
         }
@@ -60,15 +66,34 @@ describe('State Monad - simple game example', function() {
       return modify(state => {
         switch (sequence.slice(0, 1)) {
           case 'a':
-            return state.on
-              ? Object.assign({}, state, { score: state.score + 1 })
-              : state
+            return state.on ? increaseScore(state) : state
           case 'b':
-            return state.on
-              ? Object.assign({}, state, { score: state.score - 1 })
-              : state
+            return state.on ? decreaseScore(state) : state
           case 'c':
-            return Object.assign({}, state, { on: !state.on })
+            return toggleGameState(state)
+        }
+      }).bind(() => playGame(sequence.slice(1)))
+    }
+
+    const gameResult = playGame(gameSequence).evalState(startState)
+
+    expect(gameResult).toEqual(expectedResult)
+  })
+
+  test('using withState', function() {
+    const playGame = sequence => {
+      if (sequence.length === 0) {
+        return gets(state => state.score)
+      }
+
+      return modify(state => {
+        switch (sequence.slice(0, 1)) {
+          case 'a':
+            return state.on ? increaseScore(state) : state
+          case 'b':
+            return state.on ? decreaseScore(state) : state
+          case 'c':
+            return toggleGameState(state)
         }
       }).bind(() => playGame(sequence.slice(1)))
     }
@@ -87,20 +112,14 @@ describe('State Monad - simple game example', function() {
       switch (sequence.slice(0, 1)) {
         case 'a':
           return playGame(sequence.slice(1))(
-            state.on
-              ? Object.assign({}, state, { score: state.score + 1 })
-              : state
+            state.on ? increaseScore(state) : state
           )
         case 'b':
           return playGame(sequence.slice(1))(
-            state.on
-              ? Object.assign({}, state, { score: state.score - 1 })
-              : state
+            state.on ? decreaseScore(state) : state
           )
         case 'c':
-          return playGame(sequence.slice(1))(
-            Object.assign({}, state, { on: !state.on })
-          )
+          return playGame(sequence.slice(1))(toggleGameState(state))
       }
     }
 
